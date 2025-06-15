@@ -27,6 +27,19 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
+
+
+    const db = client.db("prodDivine");
+    const queryCollection = db.collection("query");
+
+    app.post("/add-query", async(req, res)=>{
+      const data = req.body;
+      const queryData = {...data, date: new Date()}
+      const result = await queryCollection.insertOne(queryData);
+      res.send(result);
+    })
+
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
