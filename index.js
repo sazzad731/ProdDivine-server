@@ -34,10 +34,22 @@ async function run() {
 
     app.post("/add-query", async(req, res)=>{
       const data = req.body;
-      const queryData = {...data, date: new Date()}
+      const queryData = { ...data, timestamp: new Date() };
       const result = await queryCollection.insertOne(queryData);
       res.send(result);
     })
+
+
+    //Get my query by email
+    app.get("/my-queries", async(req, res)=>{
+      const { email } = req.query;
+      const query = { email: email };
+      const result = await queryCollection
+        .find(query)
+        .sort({ timestamp: -1 })
+        .toArray();
+      res.send(result);
+    });
 
 
     // Send a ping to confirm a successful connection
