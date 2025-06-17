@@ -3,7 +3,7 @@ const app = express();
 const cors = require('cors');
 require('dotenv').config();
 const port = process.env.PORT || 5000;
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 app.use(cors());
 app.use(express.json());
@@ -50,6 +50,15 @@ async function run() {
         .toArray();
       res.send(result);
     });
+
+
+    // Delete a query
+    app.delete("/delete-query/:id", async(req, res)=>{
+      const {id} = req.params;
+      const query = { _id: new ObjectId(id) };
+      const result = await queryCollection.deleteOne(query);
+      res.send(result);
+    })
 
 
     // Send a ping to confirm a successful connection
