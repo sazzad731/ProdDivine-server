@@ -33,9 +33,9 @@ async function run() {
     const queryCollection = db.collection("query");
 
     app.post("/add-query", async(req, res)=>{
-      const data = req.body;
-      const queryData = { ...data, timestamp: new Date() };
-      const result = await queryCollection.insertOne(queryData);
+      const updatedQuery = req.body;
+      const queryupdatedQuery = { ...updatedQuery, timestamp: new Date() };
+      const result = await queryCollection.insertOne(queryupdatedQuery);
       res.send(result);
     })
 
@@ -50,6 +50,19 @@ async function run() {
         .toArray();
       res.send(result);
     });
+
+
+    // Update a query
+    app.patch("/update-query/:id", async(req, res)=>{
+      const {id} = req.params;
+      const updatedQuery = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: updatedQuery
+      }
+      const result = await queryCollection.updateOne(filter, updatedDoc)
+      res.send(result);
+    })
 
 
     // Delete a query
