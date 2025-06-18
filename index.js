@@ -32,6 +32,14 @@ async function run() {
     const db = client.db("prodDivine");
     const queryCollection = db.collection("query");
 
+
+    //Get Recent query
+    app.get("/recent-query", async(req, res)=>{
+      const result = await queryCollection.find().sort({ timestamp: -1 }).limit(6).toArray();
+      res.send(result)
+    })
+
+
     app.post("/add-query", async(req, res)=>{
       const updatedQuery = req.body;
       const queryupdatedQuery = { ...updatedQuery, timestamp: new Date() };
