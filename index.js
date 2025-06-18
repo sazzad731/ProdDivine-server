@@ -40,6 +40,13 @@ async function run() {
     })
 
 
+    //Get all query
+    app.get("/queries", async(req, res)=>{
+      const result = await queryCollection.find().sort({timestamp: -1}).toArray();
+      res.send(result)
+    })
+
+
     app.post("/add-query", async(req, res)=>{
       const updatedQuery = req.body;
       const queryupdatedQuery = { ...updatedQuery, timestamp: new Date() };
