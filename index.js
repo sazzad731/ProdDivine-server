@@ -30,6 +30,7 @@ async function run() {
 
     const db = client.db("prodDivine");
     const queryCollection = db.collection("query");
+    const recommendCollection = db.collection("recommendation");
 
     //Get Recent query
     app.get("/recent-query", async (req, res) => {
@@ -95,6 +96,31 @@ async function run() {
       const result = await queryCollection.deleteOne(query);
       res.send(result);
     });
+
+
+
+    // recommendation related api
+    app.post("/add-recommendation", async(req, res)=>{
+      const data = req.body;
+      const recommendedData = {
+        ...data,
+        timestamp: new Date()
+      }
+      const result = await recommendCollection.insertOne(recommendedData);
+      if(result.insertedId){
+        const filter = { _id: new ObjectId(data.queryId) };
+        const updateRecommendationCount = await queryCollection.updateOne(
+          filter,
+          {
+            $inc: {
+              recommendationCount: 1,
+            },
+          }
+        );
+        res.send({ result, updateRecommendationCount });
+      }
+    })
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
