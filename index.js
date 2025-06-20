@@ -28,35 +28,45 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
-
     const db = client.db("prodDivine");
     const queryCollection = db.collection("query");
 
-
     //Get Recent query
-    app.get("/recent-query", async(req, res)=>{
-      const result = await queryCollection.find().sort({ timestamp: -1 }).limit(6).toArray();
-      res.send(result)
-    })
-
+    app.get("/recent-query", async (req, res) => {
+      const result = await queryCollection
+        .find()
+        .sort({ timestamp: -1 })
+        .limit(6)
+        .toArray();
+      res.send(result);
+    });
 
     //Get all query
-    app.get("/queries", async(req, res)=>{
-      const result = await queryCollection.find().sort({timestamp: -1}).toArray();
-      res.send(result)
+    app.get("/queries", async (req, res) => {
+      const result = await queryCollection
+        .find()
+        .sort({ timestamp: -1 })
+        .toArray();
+      res.send(result);
+    });
+
+    // get a specific query details
+    app.get("/query-details/:id", async(req, res)=>{
+      const { id } = req.params;
+      const filter = { _id: new ObjectId(id) };
+      const result = await queryCollection.findOne(filter);
+      res.send(result);
     })
 
-
-    app.post("/add-query", async(req, res)=>{
+    app.post("/add-query", async (req, res) => {
       const updatedQuery = req.body;
       const queryupdatedQuery = { ...updatedQuery, timestamp: new Date() };
       const result = await queryCollection.insertOne(queryupdatedQuery);
       res.send(result);
-    })
-
+    });
 
     //Get my query by email
-    app.get("/my-queries", async(req, res)=>{
+    app.get("/my-queries", async (req, res) => {
       const { email } = req.query;
       const query = { email: email };
       const result = await queryCollection
@@ -66,28 +76,25 @@ async function run() {
       res.send(result);
     });
 
-
     // Update a query
-    app.patch("/update-query/:id", async(req, res)=>{
-      const {id} = req.params;
+    app.patch("/update-query/:id", async (req, res) => {
+      const { id } = req.params;
       const updatedQuery = req.body;
       const filter = { _id: new ObjectId(id) };
       const updatedDoc = {
-        $set: updatedQuery
-      }
-      const result = await queryCollection.updateOne(filter, updatedDoc)
+        $set: updatedQuery,
+      };
+      const result = await queryCollection.updateOne(filter, updatedDoc);
       res.send(result);
-    })
-
+    });
 
     // Delete a query
-    app.delete("/delete-query/:id", async(req, res)=>{
-      const {id} = req.params;
+    app.delete("/delete-query/:id", async (req, res) => {
+      const { id } = req.params;
       const query = { _id: new ObjectId(id) };
       const result = await queryCollection.deleteOne(query);
       res.send(result);
-    })
-
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
