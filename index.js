@@ -100,6 +100,16 @@ async function run() {
 
 
     // recommendation related api
+
+    app.get('/all-recommendations/:id', async(req, res)=>{
+      const { id } = req.params;
+      const query = { queryId: id };
+      const result = await recommendCollection.find(query).toArray();
+      res.send(result)
+    })
+
+
+
     app.post("/add-recommendation", async(req, res)=>{
       const data = req.body;
       const recommendedData = {
