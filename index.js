@@ -132,6 +132,15 @@ async function run() {
     })
 
 
+    // My Recommendations
+    app.get("/my-recommendations/:email", async(req, res)=>{
+      const { email } = req.params;
+      const query = {recommenderEmail: email}
+      const result = await recommendCollection.find(query).toArray();
+      res.send(result)
+    });
+
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
