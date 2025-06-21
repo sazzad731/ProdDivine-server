@@ -141,6 +141,22 @@ async function run() {
     });
 
 
+    //Delete my recommendation
+    app.delete("/delete-recommendations", async(req, res)=>{
+      const { productId, queryId } = req.query;
+      const query = {_id: new ObjectId(productId)};
+      const result = await recommendCollection.deleteOne(query);
+      if(result.deletedCount === 1){
+        const filter = { _id: new ObjectId(queryId) }
+        const updatedRecommendation = await queryCollection.updateOne(filter, {
+          $inc: {
+            recommendationCount: -1,
+          },
+        });
+        res.send({result, updatedRecommendation})
+      }
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
