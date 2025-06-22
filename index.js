@@ -44,8 +44,17 @@ async function run() {
 
     //Get all query
     app.get("/queries", async (req, res) => {
+      const {search} = req.query;
+      let query = {}
+
+      if (search && search.trim() !== "") {
+        query = {
+          productName: { $regex: search, $options: "i" },
+        };
+      }
+
       const result = await queryCollection
-        .find()
+        .find(query)
         .sort({ timestamp: -1 })
         .toArray();
       res.send(result);
