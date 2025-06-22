@@ -1,2 +1,4 @@
 node_modules
 .env
+.vercel
+prod-divine-firebase-service-key.json

@@ -4,6 +4,9 @@ const cors = require('cors');
 require('dotenv').config();
 const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const admin = require("firebase-admin");
+const decoded = Buffer.from(process.env.FIREBASE_SERVICE_KEY, "base64").toString("utf8");
+const serviceAccount = JSON.parse(decoded);
 
 app.use(cors());
 app.use(express.json());
@@ -23,10 +26,38 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   },
 });
+
+
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
+
+
+
+
+const verifyFireBaseToken = async(req, res, next)=>{
+  const authHeaders = req.headers?.authorization;
+  if(!authHeaders || !authHeaders.startsWith("Bearer ")){
+    return res.status(401).send({message: 'unauthorized access'})
+  }
+  const token = authHeaders.split(" ")[ 1 ];
+  try{
+    const decoded = await admin.auth().verifyIdToken(token)
+    req.decoded = decoded;
+    next();
+  }catch(error){
+    return res.status(401).send({message: "unauthorized access", error: error})
+  }
+}
+
+
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     const db = client.db("prodDivine");
     const queryCollection = db.collection("query");
@@ -68,7 +99,7 @@ async function run() {
       res.send(result);
     })
 
-    app.post("/add-query", async (req, res) => {
+    app.post("/add-query", verifyFireBaseToken, async (req, res) => {
       const updatedQuery = req.body;
       const queryupdatedQuery = { ...updatedQuery, timestamp: new Date() };
       const result = await queryCollection.insertOne(queryupdatedQuery);
@@ -76,7 +107,7 @@ async function run() {
     });
 
     //Get my query by email
-    app.get("/my-queries", async (req, res) => {
+    app.get("/my-queries", verifyFireBaseToken, async (req, res) => {
       const { email } = req.query;
       const query = { email: email };
       const result = await queryCollection
@@ -87,7 +118,7 @@ async function run() {
     });
 
     // Update a query
-    app.patch("/update-query/:id", async (req, res) => {
+    app.patch("/update-query/:id", verifyFireBaseToken, async (req, res) => {
       const { id } = req.params;
       const updatedQuery = req.body;
       const filter = { _id: new ObjectId(id) };
@@ -99,7 +130,7 @@ async function run() {
     });
 
     // Delete a query
-    app.delete("/delete-query/:id", async (req, res) => {
+    app.delete("/delete-query/:id", verifyFireBaseToken, async (req, res) => {
       const { id } = req.params;
       const query = { _id: new ObjectId(id) };
       const result = await queryCollection.deleteOne(query);
@@ -110,7 +141,7 @@ async function run() {
 
     // recommendation related api
 
-    app.get('/all-recommendations/:id', async(req, res)=>{
+    app.get('/all-recommendations/:id',verifyFireBaseToken, async(req, res)=>{
       const { id } = req.params;
       const query = { queryId: id };
       const result = await recommendCollection.find(query).toArray();
@@ -119,14 +150,14 @@ async function run() {
 
 
 
-    app.post("/add-recommendation", async(req, res)=>{
+    app.post("/add-recommendation", verifyFireBaseToken, async (req, res) => {
       const data = req.body;
       const recommendedData = {
         ...data,
-        timestamp: new Date()
-      }
+        timestamp: new Date(),
+      };
       const result = await recommendCollection.insertOne(recommendedData);
-      if(result.insertedId){
+      if (result.insertedId) {
         const filter = { _id: new ObjectId(data.queryId) };
         const updateRecommendationCount = await queryCollection.updateOne(
           filter,
@@ -138,11 +169,11 @@ async function run() {
         );
         res.send({ result, updateRecommendationCount });
       }
-    })
+    });
 
 
     // My Recommendations
-    app.get("/my-recommendations/:email", async(req, res)=>{
+    app.get("/my-recommendations/:email",verifyFireBaseToken, async(req, res)=>{
       const { email } = req.params;
       const query = {recommenderEmail: email}
       const result = await recommendCollection.find(query).toArray();
@@ -151,7 +182,7 @@ async function run() {
 
 
     //Delete my recommendation
-    app.delete("/delete-recommendations", async(req, res)=>{
+    app.delete("/delete-recommendations",verifyFireBaseToken, async(req, res)=>{
       const { productId, queryId } = req.query;
       const query = {_id: new ObjectId(productId)};
       const result = await recommendCollection.deleteOne(query);
@@ -168,7 +199,7 @@ async function run() {
 
 
     //get all Recommendations for log in user
-    app.get("/recommendations-for-me", async(req, res)=>{
+    app.get("/recommendations-for-me",verifyFireBaseToken, async(req, res)=>{
       const {email} = req.query;
       const query = { userEmail: email };
       const result = await recommendCollection.find(query).toArray();
@@ -177,10 +208,10 @@ async function run() {
 
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    // await client.db("admin").command({ ping: 1 });
+    // console.log(
+    //   "Pinged your deployment. You successfully connected to MongoDB!"
+    // );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
