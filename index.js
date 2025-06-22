@@ -157,6 +157,16 @@ async function run() {
       }
     });
 
+
+    //get all Recommendations for log in user
+    app.get("/recommendations-for-me", async(req, res)=>{
+      const {email} = req.query;
+      const query = { userEmail: email };
+      const result = await recommendCollection.find(query).toArray();
+      res.send(result);
+    })
+
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
