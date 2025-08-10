@@ -8,7 +8,7 @@ const admin = require("firebase-admin");
 const decoded = Buffer.from(process.env.FIREBASE_SERVICE_KEY, "base64").toString("utf8");
 const serviceAccount = JSON.parse(decoded);
 
-app.use(cors());
+app.use(cors())
 app.use(express.json());
 
 app.get("/", (req,res)=>{
@@ -75,18 +75,30 @@ async function run() {
 
     //Get all query
     app.get("/queries", async (req, res) => {
-      const {search} = req.query;
-      let query = {}
+      const { search, sort } = req.query;
+      let query = {};
+      let sortQuery = {};
 
+      // Search filter
       if (search && search.trim() !== "") {
         query = {
           productName: { $regex: search, $options: "i" },
         };
       }
 
+      // Sorting
+       if (sort === "asc") {
+         sortQuery = { recommendationCount: 1 };
+       } else if (sort === "desc") {
+         sortQuery = { recommendationCount: -1 };
+       } else {
+         // Default sort
+         sortQuery = { timestamp: -1 };
+       }
+
       const result = await queryCollection
         .find(query)
-        .sort({ timestamp: -1 })
+        .sort(sortQuery)
         .toArray();
       res.send(result);
     });
