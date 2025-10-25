@@ -234,6 +234,21 @@ async function run() {
     });
 
 
+    // Add comment in recommendation
+    app.patch("/recommendations/comment/:id", async(req, res)=>{
+      const { id } = req.params;
+      const data = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $push: {
+          comments: data
+        }
+      };
+      const result = await recommendCollection.updateOne(filter, updatedDoc, {upsert: true});
+      res.send(result);
+    });
+
+
     // My Recommendations
     app.get("/my-recommendations/:email",verifyFireBaseToken, async(req, res)=>{
       const { email } = req.params;
