@@ -186,6 +186,19 @@ async function run() {
     });
 
 
+    // Get bookmarked queries
+    app.get("/bookmarked-items/:email", async (req, res) => {
+      const { email } = req.params;
+      const filter = { userEmail: email };
+      const { booked } = await bookmarksCollection.findOne(filter);
+      // Convert strings to ObjectId
+      const ids = booked.map((idStr) => new ObjectId(idStr));
+      const query = { _id: { $in: ids } };
+      const result = await queryCollection.find(query).toArray();
+      res.send(result);
+    });
+
+
 
 
     // recommendation related api
