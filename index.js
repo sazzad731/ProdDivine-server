@@ -62,6 +62,7 @@ async function run() {
     const db = client.db("prodDivine");
     const queryCollection = db.collection("query");
     const recommendCollection = db.collection("recommendation");
+    const bookmarksCollection = db.collection("bookmarks")
 
     //Get Recent query
     app.get("/recent-query", async (req, res) => {
@@ -150,10 +151,46 @@ async function run() {
     });
 
 
+    // Bookmark a query
+    app.put("/bookmark", async (req, res) => {
+      const { userEmail, booked } = req.body;
+      if (!userEmail || !Array.isArray(booked) || booked.length === 0) {
+        return res
+          .status(400)
+          .json({ error: "Missing userEmail or booked id" });
+      }
+      try {
+        const filter = { userEmail };
+        const exist = await bookmarksCollection.findOne(filter);
+        if (exist.booked.includes(booked[0])) {
+          res.send({
+            acknowledged: true,
+            matchedCount: 1,
+            modifiedCount: 0,
+            upsertedCount: 0,
+            upsertedId: null,
+          });
+          return
+        }
+        if(exist){
+          const result = await bookmarksCollection.updateOne(filter, { $push: { booked: booked[0] } })
+          res.send(result)
+          return
+        }
+        const result = await bookmarksCollection.insertOne({ userEmail, booked })
+        res.send(result);
+      } catch (error) {
+        console.error("Error updating bookmark:", error);
+        res.status(500).json({ error: "Internal server error" });
+      }
+    });
+
+
+
 
     // recommendation related api
 
-    app.get('/all-recommendations/:id',verifyFireBaseToken, async(req, res)=>{
+    app.get('/all-recommendations/:id', async(req, res)=>{
       const { id } = req.params;
       const query = { queryId: id };
       const result = await recommendCollection.find(query).toArray();
